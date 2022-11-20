@@ -1,0 +1,77 @@
+version: '3.9'
+
+services:
+  api:
+    build:
+      dockerfile: docker/api.Dockerfile
+      context: .
+      tags:
+        - "wefusion/api:latest"
+    container_name: wefusion-api
+    ports:
+      - ${API_PORT}:${API_PORT}
+    environment:
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - RABBITMQ_HOST=${RABBITMQ_HOST}
+      - RABBITMQ_PORT=${RABBITMQ_PORT}
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+
+    command: uvicorn api.main:app --host 0.0.0.0 --port ${API_PORT} --workers ${API_WORKERS}
+
+  postgres:
+    image: postgres:14-alpine
+    container_name: wefusion-postgres
+    ports:
+      - ${POSTGRES_PORT}:5432
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3.9.7-management-alpine
+    container_name: wefusion-rabbitmq
+    ports:
+      - ${RABBITMQ_PORT}:5672
+      - ${RABBITMQ_MANAGEMENT_PORT}:15672
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+
+    volumes:
+      - ./data/rabbitmq:/var/lib/rabbitmq
+
+  stable-diffusion:
+    build:
+      dockerfile: docker/stable-diffusion.Dockerfile
+      context: .
+      tags:
+        - "wefusion/stable-diffusion:latest"
+    container_name: wefusion-stable-diffusion
+    environment:
+      - RABBITMQ_HOST=${RABBITMQ_HOST}
+      - RABBITMQ_PORT=${RABBITMQ_PORT}
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+      - HUGGING_FACE_TOKEN=${HUGGING_FACE_TOKEN}
+
+    volumes:
+      - ./data/stable-diffusion/cache:/root/.cache/huggingface
+      - ./data/stable-diffusion/output:/app/output
+
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+
+    command: python3 stable_diffusion/main.py
