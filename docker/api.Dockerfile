@@ -12,7 +12,7 @@ RUN apt-get update && \
     apt-get autoremove -y && \
     apt-get autoclean -y && \
     rm -rf /var/lib/apt/lists/* && \
-    rm -rf /root/.cache/pip &&
+    rm -rf /root/.cache/pip
 
 COPY core ./core
 COPY api ./api
