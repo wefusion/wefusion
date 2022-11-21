@@ -124,7 +124,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              count: 1
+              count: all
               capabilities: [ gpu ]
 
     command: python3 stable_diffusion/main.py
