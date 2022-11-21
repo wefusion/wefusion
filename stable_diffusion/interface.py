@@ -2,7 +2,7 @@ import torch
 from diffusers import StableDiffusionPipeline
 
 
-class StableDiffusionInterface:
+class StableDiffusinInterface:
     def __init__(
         self,
         model_name,
@@ -34,7 +34,13 @@ class StableDiffusionInterface:
         num_images_per_prompt=1,
         num_inference_steps=50,
         guidance_scale=7.5,
+        seed=None,
     ):
+        g_cuda = None
+        if seed is not None:
+            g_cuda = torch.Generator(device="cuda")
+            g_cuda.manual_seed(seed)
+
         return self.pipe(
             prompt,
             height=height,
@@ -43,4 +49,5 @@ class StableDiffusionInterface:
             num_images_per_prompt=num_images_per_prompt,
             num_inference_steps=num_inference_steps,
             guidance_scale=guidance_scale,
+            generator=g_cuda,
         ).images

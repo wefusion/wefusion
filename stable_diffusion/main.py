@@ -45,6 +45,7 @@ def main():
             num_images_per_prompt=exec_task.samples_num,
             num_inference_steps=exec_task.steps_num,
             guidance_scale=exec_task.guidance_scale,
+            seed=exec_task.seed,
         )
 
         for image in images:
@@ -57,6 +58,7 @@ def main():
 
         channel.basic_ack(delivery_tag=method_frame.delivery_tag)
 
+    channel.queue_declare(queue=TASK_QUEUE_NAME, durable=True)
     channel.basic_consume(TASK_QUEUE_NAME, on_message)
 
     try:
