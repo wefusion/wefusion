@@ -64,6 +64,7 @@ def on_message(
         )
 
         session.add(status_obj)
+        session.commit()
 
     images = stable_diffusion_interface(
         exec_payload.prompt,
@@ -93,6 +94,7 @@ def on_message(
 
             session.add(artifact_obj)
             session.add(status_obj)
+            session.commit()
 
     channel.basic_ack(delivery_tag=method_frame.delivery_tag)
 
