@@ -19,6 +19,7 @@ services:
       - RABBITMQ_PORT=${RABBITMQ_PORT}
       - RABBITMQ_USER=${RABBITMQ_USER}
       - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+      - SECRET_KEY=${API_SECRET_KEY}
 
     command: uvicorn api.main:app --host 0.0.0.0 --port ${API_PORT} --workers ${API_WORKERS}
 
@@ -26,6 +27,8 @@ services:
     build:
       dockerfile: docker/nginx.Dockerfile
       context: .
+    container_name: wefusion-nginx
+
     volumes:
       - ./data/stable-diffusion/output:/www/data/images
 
