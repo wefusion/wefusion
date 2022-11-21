@@ -2,7 +2,7 @@ import torch
 from diffusers import StableDiffusionPipeline
 
 
-class StableDiffusinInterface:
+class StableDiffusionInterface:
     def __init__(
         self,
         model_name,
