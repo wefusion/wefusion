@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -12,7 +13,7 @@ class ExecutionPayload(BaseModel):
     steps_num: int
     samples_num: int
     guidance_scale: float
-    seed: int
+    seed: Optional[int]
 
 
 class ExecutionTask(BaseModel):

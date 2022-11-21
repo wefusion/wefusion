@@ -4,7 +4,14 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from core.constants import DEFAULT_HEIGHT, DEFAULT_WIDTH, ExecTaskStatuses
+from core.constants import (
+    DEFAULT_GUIDANCE_SCALE,
+    DEFAULT_HEIGHT,
+    DEFAULT_SAMPLES_NUM,
+    DEFAULT_STEPS_NUM,
+    DEFAULT_WIDTH,
+    ExecTaskStatuses,
+)
 from core.schemas.execution import ExecutionPayload
 
 
@@ -14,6 +21,10 @@ class ExecutionIn(BaseModel):
 
     width: int = DEFAULT_WIDTH
     height: int = DEFAULT_HEIGHT
+    steps_num: int = DEFAULT_STEPS_NUM
+    samples_num: int = DEFAULT_SAMPLES_NUM
+    guidance_scale: float = DEFAULT_GUIDANCE_SCALE
+    seed: Optional[int] = None
 
 
 class ExecutionOut(BaseModel):

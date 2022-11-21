@@ -8,13 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.crud import exec_task_crud
 from api.routes.providers import get_channel, get_current_user, get_session
 from api.schemas.execution import ExecutionIn, ExecutionOut
-from core.constants import (
-    DEFAULT_GUIDANCE_SCALE,
-    DEFAULT_SAMPLES_NUM,
-    DEFAULT_STEPS_NUM,
-    MODEL_SEED,
-    TASK_QUEUE_NAME,
-)
+from core.constants import TASK_QUEUE_NAME
 from core.models import User
 from core.schemas.execution import ExecutionPayload, ExecutionTask
 
@@ -47,10 +41,10 @@ async def create_execution(
         negative_prompt=execution_in.negative_prompt,
         width=execution_in.width,
         height=execution_in.height,
-        steps_num=DEFAULT_STEPS_NUM,
-        guidance_scale=DEFAULT_GUIDANCE_SCALE,
-        samples_num=DEFAULT_SAMPLES_NUM,
-        seed=MODEL_SEED,
+        steps_num=execution_in.steps_num,
+        guidance_scale=execution_in.guidance_scale,
+        samples_num=execution_in.samples_num,
+        seed=execution_in.seed,
     )
 
     exec_task_obj, exec_task_status_obj = await exec_task_crud.create(

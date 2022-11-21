@@ -78,7 +78,7 @@ def on_message(
     )
 
     for image in images:
-        img_id = uuid.uuid4().hex
+        img_id = uuid.uuid4()
         image.save(f"/app/output/{img_id}.jpg")
 
         with connection_store.get_session() as session:
