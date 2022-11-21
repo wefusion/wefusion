@@ -4,6 +4,8 @@ from pydantic import AmqpDsn, BaseSettings, PostgresDsn, validator
 
 
 class PostgresSettings(BaseSettings):
+    POSTGRES_DRIVER: str = "psycopg"
+
     POSTGRES_HOST: str
     POSTGRES_PORT: str
 
@@ -24,7 +26,7 @@ class PostgresSettings(BaseSettings):
             return v
 
         return PostgresDsn.build(
-            scheme="postgresql+asyncpg",
+            scheme=f"postgresql+{values.get('POSTGRES_DRIVER')}",
             user=values.get("POSTGRES_USER"),
             password=values.get("POSTGRES_PASSWORD"),
             host=values.get("POSTGRES_HOST"),

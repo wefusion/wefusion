@@ -16,7 +16,7 @@ from core.constants import (
     TASK_QUEUE_NAME,
 )
 from core.models import User
-from core.schemas.execution import ExecutionTask
+from core.schemas.execution import ExecutionPayload, ExecutionTask
 
 router = APIRouter()
 
@@ -42,7 +42,7 @@ async def create_execution(
     if execution_in.negative_prompt:
         check_prompt(execution_in.negative_prompt)
 
-    exec_payload = ExecutionTask(
+    exec_payload = ExecutionPayload(
         prompt=execution_in.prompt,
         negative_prompt=execution_in.negative_prompt,
         width=execution_in.width,

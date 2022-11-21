@@ -5,7 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from core.constants import DEFAULT_HEIGHT, DEFAULT_WIDTH, ExecTaskStatuses
-from core.schemas.execution import ExecutionTask
+from core.schemas.execution import ExecutionPayload
 
 
 class ExecutionIn(BaseModel):
@@ -19,5 +19,5 @@ class ExecutionIn(BaseModel):
 class ExecutionOut(BaseModel):
     id_: UUID = Field(..., alias="id")
     timestamp: datetime
-    payload: ExecutionTask
+    payload: ExecutionPayload
     status: ExecTaskStatuses

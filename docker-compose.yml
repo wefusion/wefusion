@@ -9,6 +9,7 @@ services:
         - "wefusion/api:latest"
     container_name: wefusion-api
     environment:
+      - POSTGRES_DRIVER=asyncpg
       - POSTGRES_HOST=${POSTGRES_HOST}
       - POSTGRES_PORT=${POSTGRES_PORT}
       - POSTGRES_USER=${POSTGRES_USER}
@@ -102,6 +103,7 @@ services:
         - "wefusion/stable-diffusion:latest"
     container_name: wefusion-stable-diffusion
     environment:
+      - POSTGRES_DRIVER=psycopg
       - POSTGRES_HOST=${POSTGRES_HOST}
       - POSTGRES_PORT=${POSTGRES_PORT}
       - POSTGRES_USER=${POSTGRES_USER}
