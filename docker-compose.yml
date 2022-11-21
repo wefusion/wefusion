@@ -24,6 +24,7 @@ services:
     profiles:
       - no_models
       - dev
+      - prod
 
   nginx:
     build:
@@ -42,6 +43,7 @@ services:
     profiles:
       - no_models
       - dev
+      - prod
 
   postgres:
     image: postgres:14-alpine
@@ -58,6 +60,7 @@ services:
     profiles:
       - no_models
       - dev
+      - prod
 
   postgres-admin:
     image: dpage/pgadmin4
@@ -72,6 +75,7 @@ services:
     user: root
     profiles:
       - dev
+
 
   rabbitmq:
     image: rabbitmq:3.9.7-management-alpine
@@ -89,6 +93,7 @@ services:
     profiles:
       - no_models
       - dev
+      - prod
   stable-diffusion:
     build:
       dockerfile: docker/stable-diffusion.Dockerfile
@@ -119,3 +124,4 @@ services:
 
     profiles:
       - with_models
+      - prod
