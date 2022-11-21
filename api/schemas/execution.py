@@ -1,8 +1,10 @@
+from datetime import datetime
 from typing import Optional
+from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from core.constants import DEFAULT_HEIGHT, DEFAULT_WIDTH
+from core.constants import DEFAULT_HEIGHT, DEFAULT_WIDTH, ExecTaskStatuses
 from core.schemas.execution import ExecutionTask
 
 
@@ -14,5 +16,8 @@ class ExecutionIn(BaseModel):
     height: int = DEFAULT_HEIGHT
 
 
-class ExecutionOut(ExecutionTask):
-    pass
+class ExecutionOut(BaseModel):
+    id_: UUID = Field(..., alias="id")
+    timestamp: datetime
+    payload: ExecutionTask
+    status: ExecTaskStatuses

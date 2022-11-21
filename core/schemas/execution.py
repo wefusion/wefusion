@@ -1,7 +1,10 @@
+from datetime import datetime
+from uuid import UUID
+
 from pydantic import BaseModel
 
 
-class ExecutionTask(BaseModel):
+class ExecutionPayload(BaseModel):
     prompt: str
     negative_prompt: str
     width: int
@@ -10,3 +13,10 @@ class ExecutionTask(BaseModel):
     samples_num: int
     guidance_scale: float
     seed: int
+
+
+class ExecutionTask(BaseModel):
+    id_: UUID
+    user_id: UUID
+    payload: ExecutionPayload
+    timestamp: datetime

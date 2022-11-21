@@ -8,8 +8,6 @@ services:
       tags:
         - "wefusion/api:latest"
     container_name: wefusion-api
-    ports:
-      - ${API_PORT}:${API_PORT}
     environment:
       - POSTGRES_HOST=${POSTGRES_HOST}
       - POSTGRES_PORT=${POSTGRES_PORT}
@@ -23,6 +21,28 @@ services:
 
     command: uvicorn api.main:app --host 0.0.0.0 --port ${API_PORT} --workers ${API_WORKERS}
 
+    profiles:
+      - no_models
+      - dev
+
+  nginx:
+    build:
+      dockerfile: docker/nginx.Dockerfile
+      context: .
+    volumes:
+      - ./data/stable-diffusion/output:/www/data/images
+
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+    environment:
+      NGINX_PORT: ${APP_PORT}
+      API_PORT: ${API_PORT}
+      API_HOST: ${API_HOST}
+
+    profiles:
+      - no_models
+      - dev
+
   postgres:
     image: postgres:14-alpine
     container_name: wefusion-postgres
@@ -34,6 +54,24 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
+
+    profiles:
+      - no_models
+      - dev
+
+  postgres-admin:
+    image: dpage/pgadmin4
+    container_name: wefusion-postgres-admin
+    ports:
+      - ${POSTGRES_ADMIN_PORT}:80
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${POSTGRES_USER}@localhost.com
+      PGADMIN_DEFAULT_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./data/pgadmin:/var/lib/pgadmin:rw
+    user: root
+    profiles:
+      - dev
 
   rabbitmq:
     image: rabbitmq:3.9.7-management-alpine
@@ -48,6 +86,9 @@ services:
     volumes:
       - ./data/rabbitmq:/var/lib/rabbitmq
 
+    profiles:
+      - no_models
+      - dev
   stable-diffusion:
     build:
       dockerfile: docker/stable-diffusion.Dockerfile
@@ -75,3 +116,6 @@ services:
               capabilities: [ gpu ]
 
     command: python3 stable_diffusion/main.py
+
+    profiles:
+      - with_models

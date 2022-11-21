@@ -6,9 +6,11 @@ from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from api.core import connection_store, settings
-from api.routes import execution
+from api.routes import api_router
 
-app = FastAPI(title="Wefusion API")
+app = FastAPI(
+    title="Wefusion API", openapi_url="/api/openapi.json", docs_url="/api/docs"
+)
 
 
 @app.on_event("startup")
@@ -28,4 +30,4 @@ async def startup():
     connection_store.sqla_engine = create_async_engine(settings.POSTGRES_DSN)
 
 
-app.include_router(execution.router, prefix="/exec", tags=["Task execution"])
+app.include_router(api_router, prefix="/api")
