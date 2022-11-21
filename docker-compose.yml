@@ -103,7 +103,7 @@ services:
         - "wefusion/stable-diffusion:latest"
     container_name: wefusion-stable-diffusion
     environment:
-      - POSTGRES_DRIVER=psycopg
+      - POSTGRES_DRIVER=psycopg2
       - POSTGRES_HOST=${POSTGRES_HOST}
       - POSTGRES_PORT=${POSTGRES_PORT}
       - POSTGRES_USER=${POSTGRES_USER}

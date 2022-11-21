@@ -4,7 +4,7 @@ from pydantic import AmqpDsn, BaseSettings, PostgresDsn, validator
 
 
 class PostgresSettings(BaseSettings):
-    POSTGRES_DRIVER: str = "psycopg"
+    POSTGRES_DRIVER: str = "psycopg2"
 
     POSTGRES_HOST: str
     POSTGRES_PORT: str
