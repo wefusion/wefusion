@@ -1,6 +1,8 @@
+import gc
 import uuid
 
 import pika
+import torch
 from diffusers import DDIMScheduler
 from pika import BlockingConnection, spec
 from pika.channel import Channel
@@ -66,16 +68,33 @@ def on_message(
         session.add(status_obj)
         session.commit()
 
-    images = stable_diffusion_interface(
-        exec_payload.prompt,
-        height=exec_payload.height,
-        width=exec_payload.width,
-        negative_prompt=exec_payload.negative_prompt,
-        num_images_per_prompt=exec_payload.samples_num,
-        num_inference_steps=exec_payload.steps_num,
-        guidance_scale=exec_payload.guidance_scale,
-        seed=exec_payload.seed,
-    )
+    print("Task: ", exec_task.json())
+    images = []
+    try:
+        images = stable_diffusion_interface(
+            exec_payload.prompt,
+            height=exec_payload.height,
+            width=exec_payload.width,
+            negative_prompt=exec_payload.negative_prompt,
+            num_images_per_prompt=exec_payload.samples_num,
+            num_inference_steps=exec_payload.steps_num,
+            guidance_scale=exec_payload.guidance_scale,
+            seed=exec_payload.seed,
+        )
+    except RuntimeError as e:
+        if "CUDA" not in str(e):
+            raise e
+
+        with connection_store.get_session() as session:
+            print("CUDA error occurred!")
+            print("Error: ", e)
+
+            status_obj = ExecTaskStatus(
+                exec_task_id=exec_task.id_,
+                status=ExecTaskStatuses.ERROR.value,
+            )
+            session.add(status_obj)
+            session.commit()
 
     for image in images:
         img_id = uuid.uuid4()
@@ -95,6 +114,9 @@ def on_message(
             session.add(artifact_obj)
             session.add(status_obj)
             session.commit()
+
+    torch.cuda.empty_cache()
+    gc.collect()
 
     channel.basic_ack(delivery_tag=method_frame.delivery_tag)
 

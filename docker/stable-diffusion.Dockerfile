@@ -11,6 +11,7 @@ RUN apt-get update -y \
     && rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONPATH /app
+ENV PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:256
 
 COPY stable_diffusion ./stable_diffusion
 COPY core ./stable_diffusion/core

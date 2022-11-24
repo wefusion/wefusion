@@ -1,6 +1,39 @@
 version: '3.9'
 
 services:
+
+  rabbitmq:
+    image: rabbitmq:3.9.7-management-alpine
+    container_name: wefusion-rabbitmq
+    restart: until-stopped
+
+    ports:
+      - ${RABBITMQ_PORT}:5672
+      - ${RABBITMQ_MANAGEMENT_PORT}:15672
+
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+
+    volumes:
+      - ./data/rabbitmq:/var/lib/rabbitmq
+
+  postgres:
+    image: postgres:14-alpine
+    container_name: wefusion-postgres
+    restart: until-stopped
+
+    ports:
+      - ${POSTGRES_PORT}:5432
+
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+
   api:
     build:
       dockerfile: docker/api.Dockerfile
@@ -8,6 +41,8 @@ services:
       tags:
         - "wefusion/api:latest"
     container_name: wefusion-api
+    restart: until-stopped
+
     environment:
       - POSTGRES_DRIVER=asyncpg
       - POSTGRES_HOST=${POSTGRES_HOST}
@@ -21,6 +56,10 @@ services:
       - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
       - SECRET_KEY=${API_SECRET_KEY}
 
+    depends_on:
+      - rabbitmq
+      - postgres
+
     command: uvicorn api.main:app --host 0.0.0.0 --port ${API_PORT} --workers ${API_WORKERS}
 
   nginx:
@@ -28,57 +67,44 @@ services:
       dockerfile: docker/nginx.Dockerfile
       context: .
     container_name: wefusion-nginx
+    restart: until-stopped
+
+    ports:
+      - ${NGINX_PORT}:${NGINX_PORT}
+    environment:
+      NGINX_PORT: ${NGINX_PORT}
+      API_PORT: ${API_PORT}
+      API_HOST: ${API_HOST}
+      APP_HOST: ${APP_HOST}
+      APP_PORT: ${APP_PORT}
 
     volumes:
       - ./data/stable-diffusion/output:/www/data/images
 
-    ports:
-      - ${APP_PORT}:${APP_PORT}
-    environment:
-      NGINX_PORT: ${APP_PORT}
-      API_PORT: ${API_PORT}
-      API_HOST: ${API_HOST}
-
-  postgres:
-    image: postgres:14-alpine
-    container_name: wefusion-postgres
-    ports:
-      - ${POSTGRES_PORT}:5432
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    volumes:
-      - ./data/postgres:/var/lib/postgresql/data
+    depends_on:
+      - api
 
   postgres-admin:
     image: dpage/pgadmin4
     container_name: wefusion-postgres-admin
+    restart: until-stopped
+
     ports:
       - ${POSTGRES_ADMIN_PORT}:80
+
+    user: root
     environment:
       PGADMIN_DEFAULT_EMAIL: ${POSTGRES_USER}@localhost.com
       PGADMIN_DEFAULT_PASSWORD: ${POSTGRES_PASSWORD}
+
     volumes:
       - ./data/pgadmin:/var/lib/pgadmin:rw
-    user: root
+
+    depends_on:
+      - postgres
 
     profiles:
       - dev
-
-
-  rabbitmq:
-    image: rabbitmq:3.9.7-management-alpine
-    container_name: wefusion-rabbitmq
-    ports:
-      - ${RABBITMQ_PORT}:5672
-      - ${RABBITMQ_MANAGEMENT_PORT}:15672
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
-
-    volumes:
-      - ./data/rabbitmq:/var/lib/rabbitmq
 
   stable-diffusion:
     build:
@@ -87,6 +113,8 @@ services:
       tags:
         - "wefusion/stable-diffusion:latest"
     container_name: wefusion-stable-diffusion
+    restart: until-stopped
+
     environment:
       - POSTGRES_DRIVER=psycopg2
       - POSTGRES_HOST=${POSTGRES_HOST}
@@ -104,6 +132,9 @@ services:
       - ./data/stable-diffusion/cache:/root/.cache/huggingface
       - ./data/stable-diffusion/output:/app/output
 
+    depends_on:
+      - postgres
+      - rabbitmq
     deploy:
       resources:
         reservations:
