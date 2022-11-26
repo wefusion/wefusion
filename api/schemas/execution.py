@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from core.constants import (
     DEFAULT_GUIDANCE_SCALE,
@@ -28,7 +28,15 @@ class ExecutionIn(BaseModel):
 
 
 class ExecutionOut(BaseModel):
-    id_: UUID = Field(..., alias="id")
+    id_: UUID
     timestamp: datetime
+    payload: ExecutionPayload
+    status: ExecTaskStatuses
+
+
+class ExecutionStatusOut(BaseModel):
+    id_: UUID
+    exec_timestamp: datetime
+    last_update_timestamp: datetime
     payload: ExecutionPayload
     status: ExecTaskStatuses
