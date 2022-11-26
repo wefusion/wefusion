@@ -15,12 +15,12 @@ class UserCreate(BaseUser):
     password: str
 
 
-class UserUpdatePassword(BaseUser):
+class UserUpdatePassword(BaseModel):
     old_password: str
     new_password: str
 
 
-class UserUpdateEmail(BaseUser):
+class UserUpdateEmail(BaseModel):
     new_email: EmailStr
     password: str
 

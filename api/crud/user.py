@@ -40,3 +40,37 @@ class UserCRUD:
         await session.refresh(user)
 
         return user
+
+    async def update_password(
+        self,
+        session: AsyncSession,
+        *,
+        user: User,
+        new_password_hash: str,
+    ) -> User:
+
+        user.password_hash = new_password_hash
+
+        session.add(user)
+
+        await session.commit()
+        await session.refresh(user)
+
+        return user
+
+    async def update_email(
+        self,
+        session: AsyncSession,
+        *,
+        user: User,
+        new_email: str,
+    ) -> User:
+
+        user.email = new_email
+
+        session.add(user)
+
+        await session.commit()
+        await session.refresh(user)
+
+        return user

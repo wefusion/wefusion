@@ -1,5 +1,6 @@
 import gc
 import uuid
+from uuid import UUID
 
 import pika
 import torch
@@ -15,6 +16,8 @@ from core.models import Artifact, ExecTaskStatus
 from core.schemas.execution import ExecutionTask
 from stable_diffusion.interface import StableDiffusionInterface
 from stable_diffusion.settings import settings
+
+FILE_EXTENSION = ".jpg"
 
 scheduler = DDIMScheduler(
     beta_start=0.00085,
@@ -50,6 +53,17 @@ class ConnectionStore:
 connection_store = ConnectionStore()
 
 
+def set_status(exec_task_id: UUID, status: ExecTaskStatuses):
+    with connection_store.get_session() as session:
+        status_obj = ExecTaskStatus(
+            exec_task_id=exec_task_id,
+            status=status,
+        )
+
+        session.add(status_obj)
+        session.commit()
+
+
 def on_message(
     channel: Channel,
     method_frame: spec.Basic.Deliver,
@@ -59,14 +73,7 @@ def on_message(
     exec_task = ExecutionTask.parse_raw(body)
     exec_payload = exec_task.payload
 
-    with connection_store.get_session() as session:
-        status_obj = ExecTaskStatus(
-            exec_task_id=exec_task.id_,
-            status=ExecTaskStatuses.IN_PROGRESS.value,
-        )
-
-        session.add(status_obj)
-        session.commit()
+    set_status(exec_task.id_, ExecTaskStatuses.IN_PROGRESS)
 
     print("Task: ", exec_task.json())
     images = []
@@ -85,35 +92,28 @@ def on_message(
         if "CUDA" not in str(e):
             raise e
 
-        with connection_store.get_session() as session:
-            print("CUDA error occurred!")
-            print("Error: ", e)
+        print("CUDA error occurred!")
+        print("Error: ", e)
 
-            status_obj = ExecTaskStatus(
-                exec_task_id=exec_task.id_,
-                status=ExecTaskStatuses.ERROR.value,
-            )
-            session.add(status_obj)
-            session.commit()
+        set_status(exec_task.id_, ExecTaskStatuses.ERROR)
 
     for image in images:
         img_id = uuid.uuid4()
-        image.save(f"/app/output/{img_id}.jpg")
+        filename = f"{img_id}{FILE_EXTENSION}"
+        image.save(f"/app/output/{filename}")
 
         with connection_store.get_session() as session:
             artifact_obj = Artifact(
-                id=img_id,
+                id_=img_id,
+                filename=filename,
                 exec_task_id=exec_task.id_,
                 user_id=exec_task.user_id,
             )
-            status_obj = ExecTaskStatus(
-                exec_task_id=exec_task.id_,
-                status=ExecTaskStatuses.DONE.value,
-            )
 
             session.add(artifact_obj)
-            session.add(status_obj)
             session.commit()
+
+    set_status(exec_task.id_, ExecTaskStatuses.DONE)
 
     torch.cuda.empty_cache()
     gc.collect()

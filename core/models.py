@@ -62,7 +62,7 @@ class Base:
 class User(Base):
     __tablename__ = "user"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    id_ = Column("id", UUID(as_uuid=True), primary_key=True, default=uuid4)
     first_name = Column(String(50), nullable=False)
     second_name = Column(String(50))
     username = Column(String(50), nullable=False, unique=True)
@@ -84,7 +84,8 @@ class User(Base):
 class ExecTask(Base):
     __tablename__ = "exec_task"
 
-    id = Column(
+    id_ = Column(
+        "id",
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid4,
@@ -105,7 +106,8 @@ class ExecTask(Base):
 class ExecTaskStatus(Base):
     __tablename__ = "exec_task_status"
 
-    id = Column(
+    id_ = Column(
+        "id",
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid4,
@@ -129,11 +131,13 @@ class ExecTaskStatus(Base):
 class Artifact(Base):
     __tablename__ = "artifact"
 
-    id = Column(
+    id_ = Column(
+        "id",
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid4,
     )
+    filename = Column(String(70), nullable=False)
     user_id = Column(
         UUID(as_uuid=True),
         ForeignKey(f"{SCHEMA}.user.id"),
