@@ -9,7 +9,7 @@ from api.core.constants import ACCESS_TOKEN_EXPIRE_MINUTES
 from api.core.http_exceptions import credentials_exception
 from api.core.security import create_access_token, verify_password
 from api.crud import user_crud
-from api.routes.providers import get_session
+from api.routes.providers import get_sqla_session
 from api.schemas.token import Token
 
 auth_router = APIRouter()
@@ -23,7 +23,7 @@ def _is_email(sample: str) -> bool:
 @auth_router.post("/oauth2", response_model=Token)
 async def oauth2_login(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_sqla_session),
 ):
     session_obj = await user_crud.get_by_username(session, username=form_data.username)
     if not session_obj:
@@ -43,7 +43,7 @@ async def oauth2_login(
 async def login(
     login: str = Form(),
     password: str = Form(),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_sqla_session),
 ):
 
     if _is_email(login):

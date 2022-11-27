@@ -1,4 +1,5 @@
 import aio_pika
+import neo4j
 from aio_pika.abc import AbstractRobustConnection
 from aio_pika.channel import Channel
 from aio_pika.pool import Pool
@@ -28,6 +29,10 @@ async def startup():
 
     connection_store.rbmq_channel_pool = channel_pool
     connection_store.sqla_engine = create_async_engine(settings.POSTGRES_DSN)
+
+    connection_store.neo4j_driver = neo4j.AsyncGraphDatabase().driver(
+        settings.NEO4J_URI, auth=(settings.NEO4J_USER, settings.NEO4J_PASSWORD)
+    )
 
 
 app.include_router(api_router, prefix="/api")
