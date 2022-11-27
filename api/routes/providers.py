@@ -14,7 +14,7 @@ from core.models import User
 user_not_found_exception = x_not_found_exception("User")
 
 
-async def get_session() -> AsyncGenerator:
+async def get_sqla_session() -> AsyncGenerator:
     async with AsyncSession(
         connection_store.sqla_engine, expire_on_commit=False
     ) as session:
@@ -26,9 +26,14 @@ async def get_channel() -> AsyncGenerator:
         yield channel
 
 
+async def get_neo4j_session() -> AsyncGenerator:
+    async with connection_store.neo4j_driver.session() as session:
+        yield session
+
+
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_session),
+    db: AsyncSession = Depends(get_sqla_session),
 ) -> User:
 
     try:

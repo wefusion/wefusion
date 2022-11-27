@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.crud import exec_task_crud
-from api.routes.providers import get_channel, get_current_user, get_session
+from api.routes.providers import get_channel, get_current_user, get_sqla_session
 from api.schemas.execution import ExecutionIn, ExecutionOut, ExecutionStatusOut
 from core.constants import TASK_QUEUE_NAME
 from core.models import User
@@ -31,7 +31,7 @@ async def create_execution(
     execution_in: ExecutionIn,
     *,
     channel: Channel = Depends(get_channel),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_sqla_session),
     user: User = Depends(get_current_user),
 ):
 
@@ -89,7 +89,7 @@ async def get_last_statuses(
     limit: int = 100,
     skip: int = 0,
     *,
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_sqla_session),
     user: User = Depends(get_current_user),
 ):
     statuses = await exec_task_crud.get_last_statuses(
@@ -106,8 +106,7 @@ async def get_last_statuses(
 async def get_task_status(
     id_: UUID,
     *,
-    session: AsyncSession = Depends(get_session),
-    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_sqla_session),
 ):
     status = await exec_task_crud.get_status_by_id(session, id_=id_)
 

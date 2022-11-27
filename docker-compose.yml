@@ -33,6 +33,21 @@ services:
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
 
+  neo4j:
+    image: neo4j:5.2.0
+    container_name: wefusion-neo4j
+    restart: unless-stopped
+
+    ports:
+      - ${NEO4J_WEB_PORT}:7474
+      - ${NEO4J_PORT}:7687
+
+    environment:
+      - NEO4J_AUTH=${NEO4J_USER}/${NEO4J_PASSWORD}
+
+    volumes:
+      - ./data/neo4j:/data
+
   api:
     build:
       dockerfile: docker/api.Dockerfile
@@ -49,6 +64,10 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
+      - NEO4J_HOST=${NEO4J_HOST}
+      - NEO4J_PORT=${NEO4J_PORT}
+      - NEO4J_USER=${NEO4J_USER}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
       - RABBITMQ_HOST=${RABBITMQ_HOST}
       - RABBITMQ_PORT=${RABBITMQ_PORT}
       - RABBITMQ_USER=${RABBITMQ_USER}
@@ -58,6 +77,7 @@ services:
     depends_on:
       - rabbitmq
       - postgres
+      - neo4j
 
     command: uvicorn api.main:app --host 0.0.0.0 --port ${API_PORT} --workers ${API_WORKERS}
 
@@ -119,6 +139,10 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
+      - NEO4J_HOST=${NEO4J_HOST}
+      - NEO4J_PORT=${NEO4J_PORT}
+      - NEO4J_USER=${NEO4J_USER}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
       - RABBITMQ_HOST=${RABBITMQ_HOST}
       - RABBITMQ_PORT=${RABBITMQ_PORT}
       - RABBITMQ_USER=${RABBITMQ_USER}
@@ -132,6 +156,7 @@ services:
     depends_on:
       - postgres
       - rabbitmq
+      - neo4j
     deploy:
       resources:
         reservations:

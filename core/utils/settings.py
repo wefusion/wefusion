@@ -66,3 +66,26 @@ class RabbitMQSettings(BaseSettings):
 
     class Config:
         env_file = ".env"
+
+
+class Neo4jSettings(BaseSettings):
+    NEO4J_HOST: str
+    NEO4J_PORT: str
+    NEO4J_USER: str
+    NEO4J_PASSWORD: str
+
+    NEO4J_URI: Optional[str] = None
+
+    @validator("NEO4J_URI", pre=False)
+    def assemble_neo4j_uri(
+        cls,
+        v: Optional[str],
+        values: Dict[str, Any],
+    ) -> str:
+        if isinstance(v, str):
+            return v
+
+        return f"bolt://{values.get('NEO4J_HOST')}:{values.get('NEO4J_PORT')}"
+
+    class Config:
+        env_file = ".env"

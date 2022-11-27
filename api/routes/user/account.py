@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.core.security import get_password_hash, verify_password
 from api.crud import user_crud
-from api.routes.providers import get_current_user, get_session
+from api.routes.providers import get_current_user, get_sqla_session
 from api.schemas.user import UserCreate, UserOut, UserUpdateEmail, UserUpdatePassword
 from core.models import User
 
@@ -17,7 +17,7 @@ async def get_me(current_user: User = Depends(get_current_user)):
 
 @router.post("/register", response_model=UserOut)
 async def register(
-    register_user_in: UserCreate, *, session: AsyncSession = Depends(get_session)
+    register_user_in: UserCreate, *, session: AsyncSession = Depends(get_sqla_session)
 ):
     user = await user_crud.get_by_username(session, username=register_user_in.username)
     if user:
@@ -42,7 +42,7 @@ async def register(
 async def update_password(
     password_update: UserUpdatePassword,
     *,
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_sqla_session),
     current_user: User = Depends(get_current_user),
 ):
     if not verify_password(password_update.old_password, current_user.password_hash):
@@ -66,7 +66,7 @@ async def update_password(
 async def update_email(
     email_update: UserUpdateEmail,
     *,
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_sqla_session),
     current_user: User = Depends(get_current_user),
 ):
     if not verify_password(email_update.password, current_user.password_hash):
