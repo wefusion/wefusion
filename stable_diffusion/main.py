@@ -9,8 +9,8 @@ from neo4j import ManagedTransaction
 from pika import spec
 from pika.channel import Channel
 
-from core.constants import TASK_QUEUE_NAME, ExecTaskStatuses
-from core.models import Artifact, ExecTaskStatus
+from core.constants import TASK_QUEUE_NAME, ExecTaskStatuses, UserArtifactTypes
+from core.models import Artifact, ExecTaskStatus, UserArtifact
 from core.schemas.execution import ExecutionTask
 from core.utils.prompt_handler import split_prompt
 from stable_diffusion.connection import connection_store
@@ -104,15 +104,23 @@ def on_message(
             id_=img_id,
             filename=filename,
             exec_task_id=exec_task.id_,
+        )
+        session.add(artifact_obj)
+        session.commit()
+
+        session.refresh(artifact_obj)
+
+        user_artifact_obj = UserArtifact(
             user_id=exec_task.user_id,
+            artifact_id=artifact_obj.id_,
+            type_=UserArtifactTypes.GENERATED,
         )
 
-        session.add(artifact_obj)
+        session.add(user_artifact_obj)
+        session.commit()
 
-        words = split_prompt(exec_payload.prompt)
+        words = list(split_prompt(exec_payload.prompt))
         add_to_search(img_id, words)
-
-    session.commit()
 
     set_status(exec_task.id_, ExecTaskStatuses.DONE)
 

@@ -18,3 +18,8 @@ class ExecTaskStatuses(str, Enum):
     IN_PROGRESS = "in_progress"
     DONE = "done"
     ERROR = "error"
+
+
+class UserArtifactTypes(str, Enum):
+    LIKED = "liked"
+    GENERATED = "generated"

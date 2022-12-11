@@ -137,10 +137,8 @@ class Artifact(Base):
         primary_key=True,
         default=uuid4,
     )
-    filename = Column(String(70), nullable=False)
-    user_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey(f"{SCHEMA}.user.id"),
+    filename = Column(
+        String(70),
         nullable=False,
     )
     exec_task_id = Column(
@@ -153,3 +151,60 @@ class Artifact(Base):
         nullable=False,
         default=datetime.now,
     )
+
+
+class UserArtifact(
+    Base,
+    extra=[
+        PrimaryKeyConstraint("user_id", "artifact_id"),
+        Index("ix__user_id_type", "user_id", "type"),
+        Index("ix__user_id_artifact_id_type", "user_id", "artifact_id", "type"),
+    ],
+):
+    __tablename__ = "user_artifact"
+
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey(f"{SCHEMA}.user.id"),
+        nullable=False,
+    )
+    artifact_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey(f"{SCHEMA}.artifact.id"),
+        nullable=False,
+    )
+    type_ = Column("type", String(50), nullable=False)
+    timestamp = Column(
+        DateTime,
+        nullable=False,
+        default=datetime.now,
+    )
+
+
+# class UserArtifactComment( TODO: add this in the future
+#     Base,
+#     extra=[
+#         PrimaryKeyConstraint("user_id", "artifact_id"),
+#     ],
+# ):
+#     __tablename__ = "user_artifact_comment"
+
+#     user_id = Column(
+#         UUID(as_uuid=True),
+#         ForeignKey(f"{SCHEMA}.user.id"),
+#         nullable=False,
+#     )
+#     artifact_id = Column(
+#         UUID(as_uuid=True),
+#         ForeignKey(f"{SCHEMA}.artifact.id"),
+#         nullable=False,
+#     )
+#     comment = Column(
+#         String(1024),
+#         nullable=False,
+#     )
+#     timestamp = Column(
+#         DateTime,
+#         nullable=False,
+#         default=datetime.now,
+#     )

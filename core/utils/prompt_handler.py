@@ -1,8 +1,8 @@
 import re
-from typing import List
+from typing import Set
 
 
-def split_prompt(prompt: str) -> List[str]:
+def split_prompt(prompt: str) -> Set[str]:
     exclude = [
         "a",
         "an",
@@ -38,7 +38,7 @@ def split_prompt(prompt: str) -> List[str]:
         "into",
     ]
 
-    return list(
+    return set(
         filter(
             lambda x: not any((i == x for i in exclude)),
             re.findall(r"([\w\&-]+)", prompt),

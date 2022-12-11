@@ -19,7 +19,7 @@ async def search_by_input(
     neo4j_session: neo4j.AsyncSession = Depends(get_neo4j_session),
     sqla_session: AsyncSession = Depends(get_sqla_session)
 ):
-    words = split_prompt(input)
+    words = list(split_prompt(input))
     ids = await search_crud.search_by_input(neo4j_session, words=words)
     artifacts = await artifact_crud.get_by_ids(sqla_session, ids=ids)
 
