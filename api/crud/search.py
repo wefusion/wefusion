@@ -25,3 +25,22 @@ class SearchCRUD:
             return scalars
 
         return await session.read_transaction(_search_by_input, words)
+
+    async def apply_search(
+        self, session: AsyncSession, *, words: List[str], ids: List[UUID]
+    ) -> None:  # TODO: refactor and move from artifact search to execution search
+        async def _apply_search(
+            tx: AsyncManagedTransaction, words: List[str], artifact_id: UUID
+        ) -> None:
+            q = 'CREATE (a:Artifact {id: "%s"})\n' % str(artifact_id)
+            for i, word in enumerate(words):
+                q += 'MERGE (t%i:Tag {name: "%s"}) CREATE (a)-[:HAVE]->(t%i)\n' % (
+                    i,
+                    word,
+                    i,
+                )
+
+            await tx.run(q)
+
+        for artifact_id in ids:
+            await session.execute_write(_apply_search, words, artifact_id)

@@ -5,7 +5,7 @@ from api.core.security import get_password_hash, verify_password
 from api.crud import user_crud
 from api.routes.providers import get_current_user, get_sqla_session
 from api.schemas.user import UserCreate, UserOut, UserUpdateEmail, UserUpdatePassword
-from core.models import User
+from core.models.models import User
 
 router = APIRouter()
 

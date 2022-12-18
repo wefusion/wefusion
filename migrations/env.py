@@ -5,7 +5,7 @@ from alembic import context
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from core.models import metadata
+from core.models.models import metadata
 from core.utils.settings import PostgresSettings
 
 # this is the Alembic Config object, which provides

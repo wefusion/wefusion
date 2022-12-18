@@ -1,18 +1,18 @@
 import gc
+import json
 import uuid
+from datetime import datetime
 from typing import List
 from uuid import UUID
 
 import torch
 from diffusers import DDIMScheduler
-from neo4j import ManagedTransaction
 from pika import spec
 from pika.channel import Channel
+from pydantic.json import pydantic_encoder
 
-from core.constants import TASK_QUEUE_NAME, ExecTaskStatuses, UserArtifactTypes
-from core.models import Artifact, ExecTaskStatus, UserArtifact
-from core.schemas.execution import ExecutionTask
-from core.utils.prompt_handler import split_prompt
+from core.constants import TASK_QUEUE_NAME, ExecTaskStatuses
+from core.schemas.execution import Artifact, ExecutionStatus, ExecutionTask
 from stable_diffusion.connection import connection_store
 from stable_diffusion.interface import StableDiffusionInterface
 from stable_diffusion.settings import settings
@@ -25,6 +25,7 @@ scheduler = DDIMScheduler(
     beta_schedule="scaled_linear",
     clip_sample=False,
     set_alpha_to_one=False,
+    steps_offset=1,
 )
 
 stable_diffusion_interface = StableDiffusionInterface(
@@ -34,31 +35,38 @@ stable_diffusion_interface = StableDiffusionInterface(
 )
 
 
-def add_to_search(artifact_id: UUID, words: List[str]) -> None:
-    def _add_to_search(tx: ManagedTransaction, artifact_id: UUID, words: List[str]):
-        q = 'CREATE (a:Artifact {id: "%s"})\n' % artifact_id
-        for i, word in enumerate(words):
-            q += 'MERGE (t%i:Tag {name: "%s"}) CREATE (a)-[:HAVE]->(t%i)\n' % (
-                i,
-                word,
-                i,
-            )
+def apply_to_search(exec_task_id: UUID) -> None:
+    session = connection_store.get_session()
 
-        tx.run(q)
+    resp = session.post(f"{settings.API_URL}/search/apply/{exec_task_id}")
 
-    session = connection_store.get_neo4j_session()
-    session.execute_write(_add_to_search, artifact_id, words)
+    if resp.status_code != 200:
+        print("API error in apply_to_search: ", resp.text)
 
 
 def set_status(exec_task_id: UUID, status: ExecTaskStatuses) -> None:
-    session = connection_store.get_sqla_session()
-    status_obj = ExecTaskStatus(
-        exec_task_id=exec_task_id,
-        status=status,
+    session = connection_store.get_session()
+
+    resp = session.post(
+        f"{settings.API_URL}/exec/status/{exec_task_id}",
+        data=ExecutionStatus(status=status, timestamp=datetime.utcnow()).json(),
     )
 
-    session.add(status_obj)
-    session.commit()
+    if resp.status_code != 200:
+        print("API error in set_status: ", resp.text)
+
+
+def add_artifacts(exec_task_id: UUID, artifacts: List[Artifact]) -> None:
+    session = connection_store.get_session()
+
+    resp = session.post(
+        f"{settings.API_URL}/exec/artifacts/{exec_task_id}",
+        data=json.dumps(
+            [artifact.dict() for artifact in artifacts], default=pydantic_encoder
+        ),
+    )
+    if resp.status_code != 200:
+        print("API error in add_artifacts: ", resp.text)
 
 
 def on_message(
@@ -85,6 +93,7 @@ def on_message(
             guidance_scale=exec_payload.guidance_scale,
             seed=exec_payload.seed,
         )
+
     except RuntimeError as e:
         if "CUDA" not in str(e):
             raise e
@@ -94,40 +103,35 @@ def on_message(
 
         set_status(exec_task.id_, ExecTaskStatuses.ERROR)
 
-    session = connection_store.get_sqla_session()
-    for image in images:
-        img_id = uuid.uuid4()
-        filename = f"{img_id}{FILE_EXTENSION}"
-        image.save(f"/app/output/{filename}")
+        channel.basic_nack(delivery_tag=method_frame.delivery_tag)
 
-        artifact_obj = Artifact(
-            id_=img_id,
-            filename=filename,
-            exec_task_id=exec_task.id_,
-        )
-        session.add(artifact_obj)
-        session.commit()
+    else:
 
-        session.refresh(artifact_obj)
+        artifacts = []
+        for image in images:
+            img_id = uuid.uuid4()
+            filename = f"{img_id}{FILE_EXTENSION}"
 
-        user_artifact_obj = UserArtifact(
-            user_id=exec_task.user_id,
-            artifact_id=artifact_obj.id_,
-            type_=UserArtifactTypes.GENERATED,
-        )
+            image.save(f"/app/output/{filename}")
 
-        session.add(user_artifact_obj)
-        session.commit()
+            artifacts.append(
+                Artifact(
+                    id_=img_id,
+                    filename=filename,
+                    timestamp=datetime.utcnow(),
+                )
+            )
 
-        words = list(split_prompt(exec_payload.prompt))
-        add_to_search(img_id, words)
+        add_artifacts(exec_task.id_, artifacts)
+        apply_to_search(exec_task.id_)
 
-    set_status(exec_task.id_, ExecTaskStatuses.DONE)
+        set_status(exec_task.id_, ExecTaskStatuses.DONE)
 
-    torch.cuda.empty_cache()
-    gc.collect()
+        channel.basic_ack(delivery_tag=method_frame.delivery_tag)
 
-    channel.basic_ack(delivery_tag=method_frame.delivery_tag)
+    finally:
+        torch.cuda.empty_cache()
+        gc.collect()
 
 
 def main():

@@ -4,6 +4,8 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
+from core.constants import ExecTaskStatuses
+
 
 class ExecutionPayload(BaseModel):
     prompt: str
@@ -20,4 +22,15 @@ class ExecutionTask(BaseModel):
     id_: UUID
     user_id: UUID
     payload: ExecutionPayload
+    timestamp: datetime
+
+
+class Artifact(BaseModel):
+    id_: UUID
+    filename: str
+    timestamp: datetime
+
+
+class ExecutionStatus(BaseModel):
+    status: ExecTaskStatuses
     timestamp: datetime

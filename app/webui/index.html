@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Stable Diffusion</title>
+	<link rel="stylesheet" type="text/css" href="./css/main.css">
+</head>
+
+
+<body>
+	<section class="about" id="about-scroll">
+		<div class="main">
+			<div class="about-text">
+				<h2>Wefusion</h2>
+				<h5>Image generator based on <span>Stable Diffusion</span></h5>
+
+				<h1><label for="Prompt">Prompt:</label></h1>
+				<textarea placeholder="Max words num is 77" rows="20" name="prompt" id="prompt" cols="40"
+					class="ui-autocomplete-input" autocomplete="off" role="textbox" aria-autocomplete="list"
+					aria-haspopup="true"></textarea>
+				<h1><label for="Negative prompt">Negative prompt:</label></h1>
+				<textarea placeholder="Max words num is 77" rows="20" name="negprompt" id="negprompt" cols="40"
+					class="ui-autocomplete-input" autocomplete="off" role="textbox" aria-autocomplete="list"
+					aria-haspopup="true"></textarea>
+
+
+				<!-- add to parallel columns items -->
+				<div class="params-container">
+					<div class="params-container__column">
+						<div class="params-container__item">
+							<h1>Guidance scale: <span id="range-value-1">7.5</span></h1>
+							<div>
+								<input type="range" id="guidance_scale" name="guidance_scale" min="1" max="30"
+									value='7.5' step='0.5' onChange="rangeSlide1(this.value)"
+									onmousemove="rangeSlide1(this.value)">
+							</div>
+							<script type="text/javascript">
+								function rangeSlide1(value) {
+									document.getElementById('range-value-1').innerHTML = value;
+								}
+							</script>
+						</div>
+						<div class="params-container__item">
+							<h1><label for="steps_num">Steps num: <span id="range-value-2">30</span></label></h1>
+							<div>
+								<input type="range" id="steps_num" name="steps_num" min="1" max="50" value='30' step='1'
+									onChange="rangeSlide2(this.value)" onmousemove="rangeSlide2(this.value)">
+							</div>
+							<script type="text/javascript">
+								function rangeSlide2(value) {
+									document.getElementById('range-value-2').innerHTML = value;
+								}
+							</script>
+						</div>
+						<div class="params-container__item">
+							<h1><label for="samples_num">Samples num: <span id="range-value-3">1</span></label></h1>
+							<div>
+								<input type="range" id="samples_num" name="samples_num" min="1" max="4" value='1'
+									step='1' onChange="rangeSlide3(this.value)" onmousemove="rangeSlide3(this.value)">
+							</div>
+							<script type="text/javascript">
+								function rangeSlide3(value) {
+									document.getElementById('range-value-3').innerHTML = value;
+								}
+							</script>
+						</div>
+					</div>
+					<div class="params-container__column">
+						<div class="params-container__item">
+							<h1><label for="width">Width: <span id="range-value-4">64</span></label></h1>
+							<div>
+								<input type="range" id="width" name="width" min="64" max="1024" value='256' step='32'
+									onChange="rangeSlide4(this.value)" onmousemove="rangeSlide4(this.value)">
+							</div>
+							<script type="text/javascript">
+								function rangeSlide4(value) {
+									document.getElementById('range-value-4').innerHTML = value;
+								}
+							</script>
+						</div>
+						<div class="params-container__item">
+							<h1><label for="height">Height: <span id="range-value-5">64</span></label></h1>
+							<div>
+								<input type="range" id="height" name="height" min="64" max="1024" value='256' step='32'
+									onChange="rangeSlide5(this.value)" onmousemove="rangeSlide5(this.value)">
+							</div>
+							<script type="text/javascript">
+								function rangeSlide5(value) {
+									document.getElementById('range-value-5').innerHTML = value;
+								}
+							</script>
+						</div>
+						<div class="params-container__item">
+							<h1><label for="Seed">Seed:</label></h1>
+							<input type="text" id="seed" name="seed" required minlength="0" maxlength="20" size="20"
+								value="-1">
+						</div>
+					</div>
+				</div>
+				<p style="text-align: center;">
+					<button type="button" onclick="generate()">Generate</button>
+				</p>
+			</div>
+	</section>
+
+	<div class="masonry" id="masonry"></div>
+
+	<script src="./js/infscroll.js"></script>
+</body>
+
+</html>

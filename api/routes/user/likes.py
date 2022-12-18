@@ -8,7 +8,7 @@ from api.crud import artifact_crud
 from api.routes.providers import get_current_user, get_sqla_session
 from api.schemas.artifact import ArtifactOut
 from core.constants import UserArtifactTypes
-from core.models import User
+from core.models.models import User
 
 router = APIRouter()
 

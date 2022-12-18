@@ -13,8 +13,11 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import JSONB, UUID
-from sqlalchemy.orm import as_declarative, declared_attr
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, as_declarative, declared_attr
+
+from core.models.types import PydanticType
+from core.schemas.execution import ExecutionPayload
 
 convention = {
     "ix": "ix__%(column_0_N_name)s",
@@ -100,7 +103,9 @@ class ExecTask(Base):
         nullable=False,
         default=datetime.now,
     )
-    payload = Column(JSONB, nullable=False)
+    payload: Mapped[ExecutionPayload] = Column(
+        PydanticType(ExecutionPayload), nullable=False
+    )
 
 
 class ExecTaskStatus(Base):

@@ -5,15 +5,25 @@ from uuid import UUID
 
 import aio_pika
 from aio_pika.channel import Channel
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.crud import exec_task_crud
-from api.routes.providers import get_channel, get_current_user, get_sqla_session
+from api.crud import artifact_crud, exec_task_crud
+from api.routes.providers import (
+    api_key_auth,
+    get_channel,
+    get_current_user,
+    get_sqla_session,
+)
 from api.schemas.execution import ExecutionIn, ExecutionOut, ExecutionStatusOut
-from core.constants import TASK_QUEUE_NAME
-from core.models import User
-from core.schemas.execution import ExecutionPayload, ExecutionTask
+from core.constants import TASK_QUEUE_NAME, UserArtifactTypes
+from core.models.models import User
+from core.schemas.execution import (
+    Artifact,
+    ExecutionPayload,
+    ExecutionStatus,
+    ExecutionTask,
+)
 
 router = APIRouter()
 
@@ -26,7 +36,10 @@ def check_prompt(prompt: str) -> None:
         )
 
 
-@router.post("/", response_model=ExecutionOut)
+@router.post(
+    "/",
+    response_model=ExecutionOut,
+)
 async def create_execution(
     execution_in: ExecutionIn,
     *,
@@ -84,7 +97,10 @@ async def create_execution(
     )
 
 
-@router.get("/status", response_model=List[ExecutionStatusOut])
+@router.get(
+    "/status",
+    response_model=List[ExecutionStatusOut],
+)
 async def get_last_statuses(
     limit: int = 100,
     skip: int = 0,
@@ -102,7 +118,10 @@ async def get_last_statuses(
     return statuses
 
 
-@router.get("/status/{id_}", response_model=ExecutionStatusOut)
+@router.get(
+    "/status/{id_}",
+    response_model=ExecutionStatusOut,
+)
 async def get_task_status(
     id_: UUID,
     *,
@@ -111,3 +130,58 @@ async def get_task_status(
     status = await exec_task_crud.get_status_by_id(session, id_=id_)
 
     return status
+
+
+@router.post(
+    "/status/{id_}",
+    status_code=200,
+    dependencies=[Depends(api_key_auth)],
+    tags=["Internal"],
+)
+async def set_task_status(
+    id_: UUID,
+    status: ExecutionStatus,
+    *,
+    session: AsyncSession = Depends(get_sqla_session),
+):
+    await exec_task_crud.set_status_by_id(
+        session,
+        id_=id_,
+        status=status,
+    )
+
+
+@router.post(
+    "/artifacts/{exec_task_id}",
+    status_code=200,
+    dependencies=[Depends(api_key_auth)],
+    tags=["Internal"],
+)
+async def create_artifacts(
+    exec_task_id: UUID,
+    artifacts: List[Artifact],
+    *,
+    session: AsyncSession = Depends(get_sqla_session),
+):
+    exec_obj = await exec_task_crud.get_by_id(session, id_=exec_task_id)
+
+    if not exec_obj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Execution task not found"
+        )
+
+    for artifact in artifacts:
+        artifact = await artifact_crud.create(
+            session,
+            id_=artifact.id_,
+            filename=artifact.filename,
+            exec_task_id=exec_task_id,
+            timestamp=artifact.timestamp,
+        )
+
+        await artifact_crud.link_to_user_by_id(
+            session,
+            user_id=exec_obj.user_id,
+            artifact_id=artifact.id_,
+            type_=UserArtifactTypes.GENERATED,
+        )
