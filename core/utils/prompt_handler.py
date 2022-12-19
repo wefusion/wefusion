@@ -1,46 +1,43 @@
-import re
-from typing import Set
+import string
+from typing import List
 
 
-def split_prompt(prompt: str) -> Set[str]:
-    exclude = [
-        "a",
-        "an",
-        "the",
-        "and",
-        "or",
-        "&&",
-        "||",
-        "not",
-        "is",
-        "are",
-        "by",
-        "on",
-        "above",
-        "across",
-        "after",
-        "against",
-        "along",
-        "among",
-        "around",
-        "at",
-        "before",
-        "behind",
-        "below",
-        "beneath",
-        "beside",
-        "between",
-        "over",
-        "under",
-        "up",
-        "down",
-        "off",
-        "into",
-    ]
+class PromptHandler:
+    def __init__(
+        self,
+        sets: List[str] = ["stopwords", "punkt"],
+    ):
+        for set_ in sets:
+            nltk.download(set_)
 
-    return set(
-        filter(
-            lambda x: not any((i == x for i in exclude)),
-            re.findall(r"([\w\&-]+)", prompt),
-        )
-    )
+        self.stop_words = set(stopwords.words("english"))
+
+    def __call__(self, prompt: str) -> List[str]:
+        word_tokens = word_tokenize(prompt)
+
+        filtered_words = []
+        for w in word_tokens:
+            if (
+                w not in self.stop_words
+                and w not in string.punctuation
+                and w not in filtered_words
+            ):
+                filtered_words.append(w)
+
+        return filtered_words
+
+
+try:
+    import nltk
+    from nltk.corpus import stopwords
+    from nltk.tokenize import word_tokenize
+
+    prompt_handler = PromptHandler()
+
+except ImportError:
+    print("nltk not found, skipping prompt handler")
+
+
+if __name__ == "__main__":
+    prompt = "Hello, how are you? Mr. Smith went to the store."
+    print(prompt_handler(prompt))

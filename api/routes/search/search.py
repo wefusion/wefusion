@@ -13,7 +13,7 @@ from api.routes.providers import (
     user_token_auth,
 )
 from api.schemas.artifact import ArtifactOut
-from core.utils.prompt_handler import split_prompt
+from core.utils.prompt_handler import prompt_handler
 
 router = APIRouter()
 
@@ -29,7 +29,7 @@ async def search_by_input(
     neo4j_session: neo4j.AsyncSession = Depends(get_neo4j_session),
     sqla_session: AsyncSession = Depends(get_sqla_session)
 ):
-    words = list(split_prompt(input_))
+    words = prompt_handler(input_)
     ids = await search_crud.search_by_input(neo4j_session, words=words)
     artifacts = await artifact_crud.get_by_ids(sqla_session, ids=ids)
 
@@ -62,7 +62,7 @@ async def apply_search(
             detail="Artifacts not found",
         )
 
-    words = list(split_prompt(exec_obj.payload.prompt))
+    words = prompt_handler(exec_obj.payload.prompt)
 
     await search_crud.apply_search(
         neo4j_session, words=words, ids=[a.id_ for a in artifacts]
