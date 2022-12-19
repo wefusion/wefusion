@@ -6,7 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.crud import artifact_crud, exec_task_crud, search_crud
-from api.routes.providers import api_key_auth, get_neo4j_session, get_sqla_session
+from api.routes.providers import (
+    api_key_auth,
+    get_neo4j_session,
+    get_sqla_session,
+    user_token_auth,
+)
 from api.schemas.artifact import ArtifactOut
 from core.utils.prompt_handler import split_prompt
 
@@ -16,6 +21,7 @@ router = APIRouter()
 @router.get(
     "/{input_}",
     response_model=List[ArtifactOut],
+    dependencies=[Depends(user_token_auth)],
 )
 async def search_by_input(
     input_: str,

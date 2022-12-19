@@ -53,6 +53,19 @@ async def get_current_user(
     return db_obj
 
 
+async def user_token_auth(
+    user_token: User = Depends(oauth2_scheme),
+) -> None:
+    try:
+        payload = jwt.decode(user_token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+
+    except JWTError:
+        raise credentials_exception
+
+
 async def api_key_auth(api_key: str = Depends(oauth2_scheme)) -> None:
     if api_key != settings.SERVICE_KEY:
         raise HTTPException(

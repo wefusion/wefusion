@@ -14,6 +14,7 @@ from api.routes.providers import (
     get_channel,
     get_current_user,
     get_sqla_session,
+    user_token_auth,
 )
 from api.schemas.execution import ExecutionIn, ExecutionOut, ExecutionStatusOut
 from core.constants import TASK_QUEUE_NAME, UserArtifactTypes
@@ -121,6 +122,7 @@ async def get_last_statuses(
 @router.get(
     "/status/{id_}",
     response_model=ExecutionStatusOut,
+    dependencies=[Depends(user_token_auth)],
 )
 async def get_task_status(
     id_: UUID,
