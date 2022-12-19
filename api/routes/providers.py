@@ -1,15 +1,15 @@
 from typing import AsyncGenerator
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException, status
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.core import connection_store
-from api.core.constants import ALGORITHM, SECRET_KEY
+from api.core import connection_store, settings
+from api.core.constants import ALGORITHM
 from api.core.http_exceptions import credentials_exception, x_not_found_exception
 from api.core.security import oauth2_scheme
 from api.crud import user_crud
-from core.models import User
+from core.models.models import User
 
 user_not_found_exception = x_not_found_exception("User")
 
@@ -37,7 +37,7 @@ async def get_current_user(
 ) -> User:
 
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
@@ -51,3 +51,10 @@ async def get_current_user(
         raise user_not_found_exception
 
     return db_obj
+
+
+async def api_key_auth(api_key: str = Depends(oauth2_scheme)) -> None:
+    if api_key != settings.SERVICE_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Forbidden"
+        )

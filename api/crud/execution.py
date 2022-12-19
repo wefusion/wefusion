@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 from uuid import UUID
 
 from sqlalchemy import join, select
@@ -6,11 +6,20 @@ from sqlalchemy.engine import Row
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.constants import ExecTaskStatuses
-from core.models import ExecTask, ExecTaskStatus, User
-from core.schemas.execution import ExecutionPayload
+from core.models.models import ExecTask, ExecTaskStatus, User
+from core.schemas.execution import ExecutionPayload, ExecutionStatus
 
 
 class ExecTaskCRUD:
+    async def get_by_id(
+        self, session: AsyncSession, *, id_: UUID
+    ) -> Optional[ExecTask]:
+        sel_stmt = select(ExecTask).where(ExecTask.id_ == id_)
+
+        result = await session.execute(sel_stmt)
+
+        return result.scalars().first()
+
     async def get_last_statuses(
         self, session: AsyncSession, *, user: User, limit: int, skip: int
     ) -> List[Row]:
@@ -71,26 +80,47 @@ class ExecTaskCRUD:
 
         return result.fetchone()
 
+    async def set_status_by_id(
+        self,
+        session: AsyncSession,
+        *,
+        id_: UUID,
+        status: ExecutionStatus,
+    ) -> None:
+        exec_task_status_obj = ExecTaskStatus(
+            exec_task_id=id_,
+            status=status.status.value,
+            timestamp=status.timestamp,
+        )
+
+        session.add(exec_task_status_obj)
+
+        await session.commit()
+
     async def create(
-        self, db: AsyncSession, *, payload_in: ExecutionPayload, user: User
+        self,
+        session: AsyncSession,
+        *,
+        payload_in: ExecutionPayload,
+        user: User,
     ) -> Tuple[ExecTask, ExecTaskStatus]:
         exec_task_obj = ExecTask(
             user_id=user.id_,
-            payload=payload_in.dict(),
+            payload=payload_in,
         )
-        db.add(exec_task_obj)
+        session.add(exec_task_obj)
 
-        await db.commit()
-        await db.refresh(exec_task_obj)
+        await session.commit()
+        await session.refresh(exec_task_obj)
 
         exec_task_status_obj = ExecTaskStatus(
             exec_task_id=exec_task_obj.id_,
             status=ExecTaskStatuses.PENDING.value,
         )
 
-        db.add(exec_task_status_obj)
+        session.add(exec_task_status_obj)
 
-        await db.commit()
-        await db.refresh(exec_task_status_obj)
+        await session.commit()
+        await session.refresh(exec_task_status_obj)
 
         return exec_task_obj, exec_task_status_obj

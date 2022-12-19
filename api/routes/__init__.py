@@ -1,6 +1,4 @@
-from fastapi import APIRouter, Depends
-
-from api.routes.providers import get_current_user
+from fastapi import APIRouter
 
 from .auth import auth_router
 from .execution import execution_router
@@ -13,7 +11,6 @@ api_router.include_router(
     execution_router,
     prefix="/exec",
     tags=["Model execution"],
-    dependencies=[Depends(get_current_user)],
 )
 
 api_router.include_router(
@@ -32,7 +29,6 @@ api_router.include_router(
     search_router,
     prefix="/search",
     tags=["Search"],
-    dependencies=[Depends(get_current_user)],
 )
 
 __all__ = ["api_router"]

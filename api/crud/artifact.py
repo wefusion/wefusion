@@ -6,13 +6,15 @@ from sqlalchemy.engine import Row
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.constants import UserArtifactTypes
-from core.models import Artifact, ExecTask, UserArtifact
+from core.models.models import Artifact, ExecTask, UserArtifact
 
 
 class ArtifactCRUD:
     async def get_by_id(self, session: AsyncSession, *, id_: UUID) -> Optional[Row]:
         sel_stmt = (
-            select(Artifact.filename, ExecTask.payload, Artifact.timestamp)
+            select(
+                Artifact.id_, Artifact.filename, ExecTask.payload, Artifact.timestamp
+            )
             .select_from(
                 join(Artifact, ExecTask, Artifact.exec_task_id == ExecTask.id_)
             )
@@ -25,11 +27,30 @@ class ArtifactCRUD:
 
     async def get_by_ids(self, session: AsyncSession, *, ids: List[UUID]) -> List[Row]:
         sel_stmt = (
-            select(Artifact.filename, ExecTask.payload, Artifact.timestamp)
+            select(
+                Artifact.id_, Artifact.filename, ExecTask.payload, Artifact.timestamp
+            )
             .select_from(
                 join(Artifact, ExecTask, Artifact.exec_task_id == ExecTask.id_)
             )
             .where(Artifact.id_.in_(ids))
+        )
+
+        result = await session.execute(sel_stmt)
+
+        return result.fetchall()
+
+    async def get_by_execution_id(
+        self, session: AsyncSession, *, id_: UUID
+    ) -> List[Row]:
+        sel_stmt = (
+            select(
+                Artifact.id_, Artifact.filename, ExecTask.payload, Artifact.timestamp
+            )
+            .select_from(
+                join(Artifact, ExecTask, Artifact.exec_task_id == ExecTask.id_)
+            )
+            .where(Artifact.exec_task_id == id_)
         )
 
         result = await session.execute(sel_stmt)
@@ -46,7 +67,9 @@ class ArtifactCRUD:
         skip: int,
     ) -> List[Row]:
         sel_stmt = (
-            select(Artifact.filename, ExecTask.payload, Artifact.timestamp)
+            select(
+                Artifact.id_, Artifact.filename, ExecTask.payload, Artifact.timestamp
+            )
             .select_from(
                 join(
                     UserArtifact,
@@ -68,6 +91,28 @@ class ArtifactCRUD:
         result = await session.execute(sel_stmt)
 
         return result.fetchall()
+
+    async def create(
+        self,
+        session: AsyncSession,
+        *,
+        id_: UUID,
+        filename: str,
+        exec_task_id: UUID,
+        timestamp: int,
+    ) -> Artifact:
+        artifact = Artifact(
+            id_=id_,
+            filename=filename,
+            exec_task_id=exec_task_id,
+            timestamp=timestamp,
+        )
+
+        session.add(artifact)
+        await session.commit()
+        await session.refresh(artifact)
+
+        return artifact
 
     async def link_to_user_by_id(
         self,

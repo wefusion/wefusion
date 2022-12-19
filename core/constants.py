@@ -1,7 +1,5 @@
 from enum import Enum
 
-MODEL_SEED = 193749182340253
-
 # model defaults
 DEFAULT_WIDTH = 512
 DEFAULT_HEIGHT = 512

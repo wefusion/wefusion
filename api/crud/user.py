@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.core.security import get_password_hash
 from api.schemas.user import UserCreate
-from core.models import User
+from core.models.models import User
 
 
 class UserCRUD:
