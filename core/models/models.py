@@ -186,30 +186,33 @@ class UserArtifact(
     )
 
 
-# class UserArtifactComment( TODO: add this in the future
-#     Base,
-#     extra=[
-#         PrimaryKeyConstraint("user_id", "artifact_id"),
-#     ],
-# ):
-#     __tablename__ = "user_artifact_comment"
+class UserArtifactComment(Base):
+    __tablename__ = "user_artifact_comment"
 
-#     user_id = Column(
-#         UUID(as_uuid=True),
-#         ForeignKey(f"{SCHEMA}.user.id"),
-#         nullable=False,
-#     )
-#     artifact_id = Column(
-#         UUID(as_uuid=True),
-#         ForeignKey(f"{SCHEMA}.artifact.id"),
-#         nullable=False,
-#     )
-#     comment = Column(
-#         String(1024),
-#         nullable=False,
-#     )
-#     timestamp = Column(
-#         DateTime,
-#         nullable=False,
-#         default=datetime.now,
-#     )
+    id_ = Column(
+        "id",
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4,
+    )
+
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey(f"{SCHEMA}.user.id"),
+        nullable=False,
+    )
+    artifact_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey(f"{SCHEMA}.artifact.id"),
+        nullable=False,
+        index=True,
+    )
+    comment = Column(
+        String(1024),
+        nullable=False,
+    )
+    timestamp = Column(
+        DateTime,
+        nullable=False,
+        default=datetime.now,
+    )
