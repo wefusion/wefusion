@@ -8,7 +8,7 @@ class PromptHandler:
         sets: List[str] = ["stopwords", "punkt"],
     ):
         for set_ in sets:
-            nltk.download(set_)
+            nltk.download(set_, quiet=True, halt_on_error=False)
 
         self.stop_words = set(stopwords.words("english"))
 
