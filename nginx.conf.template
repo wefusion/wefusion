@@ -7,10 +7,20 @@ http {
 
     server {
         listen ${NGINX_PORT};
+
         root /www/data/;
 
-        location /images/ {
-            autoindex off;
+        location / {
+            root /www/data/html/;
+            index index.html;
+        }
+
+        location /static {
+            alias /www/data/static/;
+        }
+
+        location /images {
+            alias /www/data/images/;
         }
 
         location /api/ {

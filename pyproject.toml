@@ -50,6 +50,11 @@ alembic = "^1.8.1"
 alembic-utils = "^0.7.8"
 
 
+
+[tool.poetry.group.app.dependencies]
+flask = "^2.2.2"
+gunicorn = "^20.1.0"
+
 [build-system]
 build-backend = "poetry.core.masonry.api"
 requires = ["poetry-core"]
